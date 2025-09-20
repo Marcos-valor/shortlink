@@ -1,3 +1,5 @@
+import { database } from './database.js'
+
 export class URLShortener {
   constructor() {
     this.baseUrl = 'https://short.ly/'
@@ -9,36 +11,45 @@ export class URLShortener {
 
   async shortenURL(originalUrl, customAlias = '') {
     const shortenBtn = document.getElementById('shorten-btn')
-    const btnText = shortenBtn.querySelector('.btn-text')
-    const btnLoader = shortenBtn.querySelector('.btn-loader')
 
     // Show loading state
     this.setLoadingState(true)
 
     try {
-      // Simulate API call delay
-      await new Promise(resolve => setTimeout(resolve, 1500))
-
-      // Generate short URL
-      const shortCode = customAlias || this.generateShortCode()
-      const shortUrl = this.baseUrl + shortCode
-
       // Validate URL
       if (!this.isValidURL(originalUrl)) {
         throw new Error('URL no válida')
       }
 
-      // Check if custom alias is available (simulate)
-      if (customAlias && !this.isAliasAvailable(customAlias)) {
+      // Generate or use custom short code
+      let shortCode = customAlias || this.generateShortCode()
+      
+      // Check if short code is available
+      const isAvailable = await database.isShortCodeAvailable(shortCode)
+      if (!isAvailable) {
         throw new Error('El alias ya está en uso')
       }
 
-      const result = {
+      // Get current user if authenticated
+      const authManager = window.app?.authManager
+      const user = authManager?.getUser()
+      const userId = user?.id || null
+
+      // Create short URL in database
+      const urlData = await database.createShortUrl(
         originalUrl,
-        shortUrl,
         shortCode,
-        createdAt: new Date().toISOString(),
-        clicks: 0
+        customAlias || null,
+        userId
+      )
+
+      const result = {
+        id: urlData.id,
+        originalUrl: urlData.original_url,
+        shortUrl: this.baseUrl + urlData.short_code,
+        shortCode: urlData.short_code,
+        createdAt: urlData.created_at,
+        clicks: urlData.clicks || 0
       }
 
       this.showResult(result)
@@ -69,13 +80,6 @@ export class URLShortener {
     } catch (_) {
       return false
     }
-  }
-
-  isAliasAvailable(alias) {
-    // Simulate checking if alias is available
-    // In a real app, this would check against a database
-    const unavailableAliases = ['admin', 'api', 'www', 'test', 'demo']
-    return !unavailableAliases.includes(alias.toLowerCase())
   }
 
   setLoadingState(loading) {

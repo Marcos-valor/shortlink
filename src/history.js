@@ -1,55 +1,62 @@
+import { database } from './database.js'
+
 export class HistoryManager {
   constructor() {
-    this.history = this.loadHistory()
+    this.history = []
   }
 
   init() {
     // Initialize history manager
   }
 
-  loadHistory() {
-    const saved = localStorage.getItem('urlHistory')
-    return saved ? JSON.parse(saved) : []
-  }
-
-  saveHistory() {
-    localStorage.setItem('urlHistory', JSON.stringify(this.history))
-  }
-
-  addToHistory(urlData) {
-    // Add timestamp and ID
-    const historyItem = {
-      ...urlData,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString()
-    }
-
-    this.history.unshift(historyItem)
+  async loadUserHistory() {
+    const authManager = window.app?.authManager
+    const user = authManager?.getUser()
     
-    // Keep only last 50 items
-    if (this.history.length > 50) {
-      this.history = this.history.slice(0, 50)
+    if (!user) {
+      this.history = []
+      return
     }
 
-    this.saveHistory()
+    try {
+      this.history = await database.getUserUrls(user.id)
+    } catch (error) {
+      console.error('Error loading user history:', error)
+      this.history = []
+    }
   }
 
-  removeFromHistory(id) {
-    this.history = this.history.filter(item => item.id !== id)
-    this.saveHistory()
-    this.renderHistory()
+  async removeFromHistory(id) {
+    const authManager = window.app?.authManager
+    const user = authManager?.getUser()
+    
+    if (!user) return
+
+    try {
+      const success = await database.deleteUrl(id, user.id)
+      if (success) {
+        this.history = this.history.filter(item => item.id !== id)
+        this.renderHistory()
+      }
+    } catch (error) {
+      console.error('Error removing from history:', error)
+    }
   }
 
   clearHistory() {
+    // This would require a batch delete operation
+    // For now, we'll just clear the local array
     this.history = []
-    this.saveHistory()
     this.renderHistory()
   }
 
-  showModal() {
+  async showModal() {
     const modal = document.getElementById('history-modal')
     modal.classList.remove('hidden')
     document.body.style.overflow = 'hidden'
+    
+    // Load fresh data from database
+    await this.loadUserHistory()
     this.renderHistory()
   }
 
@@ -76,8 +83,8 @@ export class HistoryManager {
         <div class="history-item-content">
           <div class="history-urls">
             <div class="short-url-display">
-              <span class="short-url">${item.shortUrl}</span>
-              <button class="copy-history-btn" data-url="${item.shortUrl}">
+              <span class="short-url">https://short.ly/${item.short_code}</span>
+              <button class="copy-history-btn" data-url="https://short.ly/${item.short_code}">
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
                   <rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect>
                   <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path>
@@ -85,11 +92,11 @@ export class HistoryManager {
               </button>
             </div>
             <div class="original-url-display">
-              <span class="original-url">${this.truncateUrl(item.originalUrl, 60)}</span>
+              <span class="original-url">${this.truncateUrl(item.original_url, 60)}</span>
             </div>
           </div>
           <div class="history-meta">
-            <span class="history-date">${this.formatDate(item.createdAt)}</span>
+            <span class="history-date">${this.formatDate(item.created_at)}</span>
             <span class="history-clicks">${item.clicks || 0} clicks</span>
           </div>
         </div>

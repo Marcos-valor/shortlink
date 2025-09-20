@@ -3,6 +3,7 @@ import { ThemeManager } from './theme.js'
 import { AuthManager } from './auth.js'
 import { URLShortener } from './urlShortener.js'
 import { HistoryManager } from './history.js'
+import { database } from './database.js'
 
 class App {
   constructor() {
@@ -58,10 +59,8 @@ class App {
       
       const result = await this.urlShortener.shortenURL(url, alias)
       if (result) {
-        // Save to history if user is logged in
-        if (this.authManager.isAuthenticated()) {
-          this.historyManager.addToHistory(result)
-        }
+        // URL is automatically saved to database in urlShortener
+        // No need to manually add to history here
       }
     })
 

@@ -1,3 +1,5 @@
+import { database } from './database.js'
+
 export class AuthManager {
   constructor() {
     this.user = null
@@ -77,7 +79,6 @@ export class AuthManager {
   signOut() {
     this.user = null
     localStorage.removeItem('user')
-    localStorage.removeItem('urlHistory')
     this.updateUI()
 
     // Hide history modal if open
