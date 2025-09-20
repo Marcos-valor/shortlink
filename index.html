@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>CRUD Básico</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; background: #f8f8f8; }
+        h1 { color: #333; }
+        form, table { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 6px #0001; }
+        form { margin-bottom: 32px; }
+        input, button { padding: 8px; margin: 4px 0; }
+        table { width: 100%; border-collapse: collapse; }
+        th, td { padding: 12px; border-bottom: 1px solid #ddd; text-align: left; }
+        tr:hover { background: #f1f1f1; }
+        button.edit, button.delete { margin-right: 4px; }
+    </style>
+</head>
+<body>
+    <h1>CRUD Básico</h1>
+    <form id="crud-form">
+        <input type="hidden" id="editIndex" value="">
+        <label>
+            Nombre:
+            <input type="text" id="name" required>
+        </label>
+        <label>
+            Email:
+            <input type="email" id="email" required>
+        </label>
+        <button type="submit">Guardar</button>
+    </form>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nombre</th>
+                <th>Email</th>
+                <th>Acciones</th>
+            </tr>
+        </thead>
+        <tbody id="crud-table-body">
+            <!-- Filas generadas dinámicamente -->
+        </tbody>
+    </table>
+
+    <script>
+        const form = document.getElementById('crud-form');
+        const nameInput = document.getElementById('name');
+        const emailInput = document.getElementById('email');
+        const editIndexInput = document.getElementById('editIndex');
+        const tableBody = document.getElementById('crud-table-body');
+
+        let items = [];
+
+        function renderTable() {
+            tableBody.innerHTML = '';
+            items.forEach((item, index) => {
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${item.name}</td>
+                    <td>${item.email}</td>
+                    <td>
+                        <button class="edit" onclick="editItem(${index})">Editar</button>
+                        <button class="delete" onclick="deleteItem(${index})">Eliminar</button>
+                    </td>
+                `;
+                tableBody.appendChild(tr);
+            });
+        }
+
+        window.editItem = function(index) {
+            nameInput.value = items[index].name;
+            emailInput.value = items[index].email;
+            editIndexInput.value = index;
+        }
+
+        window.deleteItem = function(index) {
+            if (confirm('¿Seguro que deseas eliminar este elemento?')) {
+                items.splice(index, 1);
+                renderTable();
+                form.reset();
+                editIndexInput.value = '';
+            }
+        }
+
+        form.onsubmit = function(e) {
+            e.preventDefault();
+            const name = nameInput.value.trim();
+            const email = emailInput.value.trim();
+            const editIndex = editIndexInput.value;
+
+            if (editIndex === '') {
+                items.push({ name, email });
+            } else {
+                items[editIndex] = { name, email };
+                editIndexInput.value = '';
+            }
+            renderTable();
+            form.reset();
+        };
+
+        renderTable();
+    </script>
+</body>
+</html>
