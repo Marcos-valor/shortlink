@@ -25,71 +25,109 @@ class App {
 
   setupEventListeners() {
     // Theme toggle
-    document.getElementById('theme-toggle').addEventListener('click', () => {
-      this.themeManager.toggle()
-    })
+    const themeToggle = document.getElementById('theme-toggle')
+    if (themeToggle) {
+      themeToggle.addEventListener('click', () => {
+        this.themeManager.toggle()
+      })
+    }
 
     // Auth events
-    document.getElementById('login-btn').addEventListener('click', () => {
-      this.authManager.signIn()
-    })
+    const loginBtn = document.getElementById('login-btn')
+    if (loginBtn) {
+      loginBtn.addEventListener('click', () => {
+        this.authManager.signIn()
+      })
+    }
 
-    document.getElementById('logout-btn').addEventListener('click', () => {
-      this.authManager.signOut()
-    })
+    const logoutBtn = document.getElementById('logout-btn')
+    if (logoutBtn) {
+      logoutBtn.addEventListener('click', () => {
+        this.authManager.signOut()
+      })
+    }
 
     // History modal
-    document.getElementById('history-btn').addEventListener('click', () => {
-      this.historyManager.showModal()
-    })
+    const historyBtn = document.getElementById('history-btn')
+    if (historyBtn) {
+      historyBtn.addEventListener('click', () => {
+        this.historyManager.showModal()
+      })
+    }
 
-    document.getElementById('close-history').addEventListener('click', () => {
-      this.historyManager.hideModal()
-    })
+    const closeHistory = document.getElementById('close-history')
+    if (closeHistory) {
+      closeHistory.addEventListener('click', () => {
+        this.historyManager.hideModal()
+      })
+    }
 
-    document.querySelector('.modal-overlay').addEventListener('click', () => {
-      this.historyManager.hideModal()
-    })
+    const modalOverlay = document.querySelector('.modal-overlay')
+    if (modalOverlay) {
+      modalOverlay.addEventListener('click', () => {
+        this.historyManager.hideModal()
+      })
+    }
 
     // URL form
-    document.getElementById('url-form').addEventListener('submit', async (e) => {
-      e.preventDefault()
-      const url = document.getElementById('url-input').value
-      const alias = document.getElementById('alias-input').value
-      
-      const result = await this.urlShortener.shortenURL(url, alias)
-      if (result) {
-        // URL is automatically saved to database in urlShortener
-        // No need to manually add to history here
-      }
-    })
+    const urlForm = document.getElementById('url-form')
+    if (urlForm) {
+      urlForm.addEventListener('submit', async (e) => {
+        e.preventDefault()
+        const urlInput = document.getElementById('url-input')
+        const aliasInput = document.getElementById('alias-input')
+        
+        if (urlInput && aliasInput) {
+          const url = urlInput.value
+          const alias = aliasInput.value
+          
+          const result = await this.urlShortener.shortenURL(url, alias)
+          if (result) {
+            // URL is automatically saved to database in urlShortener
+            // No need to manually add to history here
+          }
+        }
+      })
+    }
 
     // Copy button
-    document.getElementById('copy-btn').addEventListener('click', () => {
-      this.copyToClipboard()
-    })
+    const copyBtn = document.getElementById('copy-btn')
+    if (copyBtn) {
+      copyBtn.addEventListener('click', () => {
+        this.copyToClipboard()
+      })
+    }
 
     // Close result
-    document.getElementById('close-result').addEventListener('click', () => {
-      this.urlShortener.hideResult()
-    })
+    const closeResult = document.getElementById('close-result')
+    if (closeResult) {
+      closeResult.addEventListener('click', () => {
+        this.urlShortener.hideResult()
+      })
+    }
 
     // User menu toggle
     document.addEventListener('click', (e) => {
       const userMenu = document.getElementById('user-menu')
-      const userInfo = userMenu.querySelector('.user-info')
-      
-      if (userInfo && userInfo.contains(e.target)) {
-        userMenu.classList.toggle('show-dropdown')
-      } else if (!userMenu.contains(e.target)) {
-        userMenu.classList.remove('show-dropdown')
+      if (userMenu) {
+        const userInfo = userMenu.querySelector('.user-info')
+        
+        if (userInfo && userInfo.contains(e.target)) {
+          userMenu.classList.toggle('show-dropdown')
+        } else if (!userMenu.contains(e.target)) {
+          userMenu.classList.remove('show-dropdown')
+        }
       }
     })
   }
 
   async copyToClipboard() {
-    const shortUrl = document.getElementById('short-url').textContent
+    const shortUrlElement = document.getElementById('short-url')
     const copyBtn = document.getElementById('copy-btn')
+    
+    if (!shortUrlElement || !copyBtn) return
+
+    const shortUrl = shortUrlElement.textContent
     const copyIcon = copyBtn.querySelector('.copy-icon')
     const checkIcon = copyBtn.querySelector('.check-icon')
     const copyText = copyBtn.querySelector('.copy-text')
@@ -98,16 +136,16 @@ class App {
       await navigator.clipboard.writeText(shortUrl)
       
       // Show success state
-      copyIcon.classList.add('hidden')
-      checkIcon.classList.remove('hidden')
-      copyText.textContent = '¡Copiado!'
+      if (copyIcon) copyIcon.classList.add('hidden')
+      if (checkIcon) checkIcon.classList.remove('hidden')
+      if (copyText) copyText.textContent = '¡Copiado!'
       copyBtn.classList.add('copied')
 
       // Reset after 2 seconds
       setTimeout(() => {
-        copyIcon.classList.remove('hidden')
-        checkIcon.classList.add('hidden')
-        copyText.textContent = 'Copiar'
+        if (copyIcon) copyIcon.classList.remove('hidden')
+        if (checkIcon) checkIcon.classList.add('hidden')
+        if (copyText) copyText.textContent = 'Copiar'
         copyBtn.classList.remove('copied')
       }, 2000)
     } catch (err) {
@@ -116,10 +154,14 @@ class App {
   }
 }
 
-// Initialize app and make it globally available
-window.app = new App()
+// Initialize app when DOM is loaded
+document.addEventListener('DOMContentLoaded', () => {
+  window.app = new App()
+})
 
 // Global function for Google Sign-In callback
 window.handleCredentialResponse = (response) => {
-  window.app?.authManager?.handleGoogleResponse(response)
+  if (window.app && window.app.authManager) {
+    window.app.authManager.handleGoogleResponse(response)
+  }
 }

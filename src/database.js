@@ -12,6 +12,7 @@ class Database {
 
     if (supabaseUrl && supabaseKey) {
       this.supabase = createClient(supabaseUrl, supabaseKey)
+      console.log('Supabase initialized successfully')
     } else {
       console.warn('Supabase credentials not found. Using localStorage fallback.')
     }
@@ -42,7 +43,8 @@ class Database {
       return data
     } catch (error) {
       console.error('Error creating short URL:', error)
-      throw error
+      // Fallback to localStorage on error
+      return this.createShortUrlLocal(originalUrl, shortCode, customAlias, userId)
     }
   }
 
@@ -59,11 +61,11 @@ class Database {
         .eq('short_code', shortCode)
         .single()
 
-      if (error) throw error
+      if (error && error.code !== 'PGRST116') throw error
       return data
     } catch (error) {
       console.error('Error getting URL by short code:', error)
-      return null
+      return this.getUrlByShortCodeLocal(shortCode)
     }
   }
 
@@ -80,16 +82,16 @@ class Database {
         .eq('short_code', shortCode)
         .maybeSingle()
 
-      if (error) {
+      if (error && error.code !== 'PGRST116') {
         console.error('Error checking availability:', error)
-        return false
+        return this.isShortCodeAvailableLocal(shortCode)
       }
 
       // Si no hay data, está disponible
       return data === null
     } catch (error) {
       console.error('Error checking short code availability:', error)
-      return false
+      return this.isShortCodeAvailableLocal(shortCode)
     }
   }
 
@@ -111,7 +113,7 @@ class Database {
       return data || []
     } catch (error) {
       console.error('Error getting user URLs:', error)
-      return []
+      return this.getUserUrlsLocal(userId)
     }
   }
 
@@ -128,6 +130,7 @@ class Database {
       if (error) throw error
     } catch (error) {
       console.error('Error incrementing clicks:', error)
+      this.incrementClicksLocal(shortCode)
     }
   }
 
@@ -148,7 +151,7 @@ class Database {
       return true
     } catch (error) {
       console.error('Error deleting URL:', error)
-      return false
+      return this.deleteUrlLocal(id, userId)
     }
   }
 
@@ -195,6 +198,7 @@ class Database {
     
     if (urlIndex !== -1) {
       urls[urlIndex].clicks = (urls[urlIndex].clicks || 0) + 1
+      urls[urlIndex].updated_at = new Date().toISOString()
       localStorage.setItem('urls', JSON.stringify(urls))
     }
   }
@@ -226,7 +230,7 @@ class Database {
       return { totalUrls, totalClicks }
     } catch (error) {
       console.error('Error getting user stats:', error)
-      return { totalUrls: 0, totalClicks: 0 }
+      return this.getUserStatsLocal(userId)
     }
   }
 

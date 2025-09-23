@@ -40,17 +40,16 @@ export class URLShortener {
 
   show404() {
     document.body.innerHTML = `
-      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 2rem;">
-        <h1 style="font-size: 4rem; margin-bottom: 1rem;">404</h1>
-        <h2 style="margin-bottom: 1rem;">URL no encontrada</h2>
-        <p style="margin-bottom: 2rem; color: #666;">La URL que buscas no existe o ha expirado.</p>
-        <a href="/" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; text-decoration: none;">Volver al inicio</a>
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 2rem; font-family: Inter, sans-serif;">
+        <h1 style="font-size: 4rem; margin-bottom: 1rem; color: #3b82f6;">404</h1>
+        <h2 style="margin-bottom: 1rem; color: #1e293b;">URL no encontrada</h2>
+        <p style="margin-bottom: 2rem; color: #64748b;">La URL que buscas no existe o ha expirado.</p>
+        <a href="/" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; text-decoration: none; font-weight: 500;">Volver al inicio</a>
       </div>
     `
   }
 
   async shortenURL(originalUrl, customAlias = '') {
-
     // Show loading state
     this.setLoadingState(true)
 
@@ -70,8 +69,8 @@ export class URLShortener {
       }
 
       // Get current user if authenticated
-      const user = window.app?.authManager?.getUser()
-      const userId = user?.id || null
+      const user = window.app && window.app.authManager ? window.app.authManager.getUser() : null
+      const userId = user ? user.id : null
 
       // Create short URL in database
       const urlData = await database.createShortUrl(
@@ -122,16 +121,18 @@ export class URLShortener {
 
   setLoadingState(loading) {
     const shortenBtn = document.getElementById('shorten-btn')
+    if (!shortenBtn) return
+
     const btnText = shortenBtn.querySelector('.btn-text')
     const btnLoader = shortenBtn.querySelector('.btn-loader')
 
     if (loading) {
-      btnText.classList.add('hidden')
-      btnLoader.classList.remove('hidden')
+      if (btnText) btnText.classList.add('hidden')
+      if (btnLoader) btnLoader.classList.remove('hidden')
       shortenBtn.disabled = true
     } else {
-      btnText.classList.remove('hidden')
-      btnLoader.classList.add('hidden')
+      if (btnText) btnText.classList.remove('hidden')
+      if (btnLoader) btnLoader.classList.add('hidden')
       shortenBtn.disabled = false
     }
   }
@@ -141,20 +142,26 @@ export class URLShortener {
     const shortUrlElement = document.getElementById('short-url')
     const originalUrlElement = document.getElementById('original-url')
 
-    shortUrlElement.textContent = result.shortUrl
-    originalUrlElement.textContent = result.originalUrl
+    if (resultSection && shortUrlElement && originalUrlElement) {
+      shortUrlElement.textContent = result.shortUrl
+      originalUrlElement.textContent = result.originalUrl
 
-    resultSection.classList.remove('hidden')
-    resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+      resultSection.classList.remove('hidden')
+      resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
 
-    // Clear form
-    document.getElementById('url-input').value = ''
-    document.getElementById('alias-input').value = ''
+      // Clear form
+      const urlInput = document.getElementById('url-input')
+      const aliasInput = document.getElementById('alias-input')
+      if (urlInput) urlInput.value = ''
+      if (aliasInput) aliasInput.value = ''
+    }
   }
 
   hideResult() {
     const resultSection = document.getElementById('result-section')
-    resultSection.classList.add('hidden')
+    if (resultSection) {
+      resultSection.classList.add('hidden')
+    }
   }
 
   showError(message) {
