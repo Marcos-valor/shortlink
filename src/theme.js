@@ -24,13 +24,8 @@ export class ThemeManager {
     const sunIcon = themeToggle.querySelector('.sun-icon')
     const moonIcon = themeToggle.querySelector('.moon-icon')
 
-    if (this.currentTheme === 'dark') {
-      sunIcon.classList.remove('hidden')
-      moonIcon.classList.add('hidden')
-    } else {
-      sunIcon.classList.add('hidden')
-      moonIcon.classList.remove('hidden')
-    }
+    // The CSS handles the visibility based on data-theme attribute
+    // No need to manually toggle classes here
   }
 
   getCurrentTheme() {

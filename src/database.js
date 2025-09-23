@@ -78,14 +78,15 @@ class Database {
         .from('urls')
         .select('id')
         .eq('short_code', shortCode)
-        .single()
+        .maybeSingle()
 
-      if (error && error.code === 'PGRST116') {
-        // No se encontró, está disponible
-        return true
+      if (error) {
+        console.error('Error checking availability:', error)
+        return false
       }
 
-      return !data
+      // Si no hay data, está disponible
+      return data === null
     } catch (error) {
       console.error('Error checking short code availability:', error)
       return false

@@ -2,15 +2,54 @@ import { database } from './database.js'
 
 export class URLShortener {
   constructor() {
-    this.baseUrl = 'https://short.ly/'
+    this.baseUrl = window.location.origin + '/r/'
   }
 
   init() {
-    // Initialize URL shortener
+    // Handle redirect routes
+    this.handleRedirect()
+  }
+
+  handleRedirect() {
+    const path = window.location.pathname
+    if (path.startsWith('/r/')) {
+      const shortCode = path.substring(3) // Remove '/r/'
+      if (shortCode) {
+        this.redirectToOriginal(shortCode)
+      }
+    }
+  }
+
+  async redirectToOriginal(shortCode) {
+    try {
+      const urlData = await database.getUrlByShortCode(shortCode)
+      if (urlData) {
+        // Increment click count
+        await database.incrementClicks(shortCode)
+        // Redirect to original URL
+        window.location.href = urlData.original_url
+      } else {
+        // Show 404 or redirect to home
+        this.show404()
+      }
+    } catch (error) {
+      console.error('Error redirecting:', error)
+      this.show404()
+    }
+  }
+
+  show404() {
+    document.body.innerHTML = `
+      <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 100vh; text-align: center; padding: 2rem;">
+        <h1 style="font-size: 4rem; margin-bottom: 1rem;">404</h1>
+        <h2 style="margin-bottom: 1rem;">URL no encontrada</h2>
+        <p style="margin-bottom: 2rem; color: #666;">La URL que buscas no existe o ha expirado.</p>
+        <a href="/" style="background: #3b82f6; color: white; padding: 0.75rem 1.5rem; border-radius: 0.5rem; text-decoration: none;">Volver al inicio</a>
+      </div>
+    `
   }
 
   async shortenURL(originalUrl, customAlias = '') {
-    const shortenBtn = document.getElementById('shorten-btn')
 
     // Show loading state
     this.setLoadingState(true)
@@ -31,8 +70,7 @@ export class URLShortener {
       }
 
       // Get current user if authenticated
-      const authManager = window.app?.authManager
-      const user = authManager?.getUser()
+      const user = window.app?.authManager?.getUser()
       const userId = user?.id || null
 
       // Create short URL in database

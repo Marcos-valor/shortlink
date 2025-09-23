@@ -116,8 +116,8 @@ class App {
   }
 }
 
-// Initialize app
-new App()
+// Initialize app and make it globally available
+window.app = new App()
 
 // Global function for Google Sign-In callback
 window.handleCredentialResponse = (response) => {
